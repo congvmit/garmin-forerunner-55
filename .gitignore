@@ -1,0 +1,10 @@
+.DS_Store
+bin/
+gen/
+keys/
+*.der
+*.pem
+*.prg
+*.iq
+*.debug.xml
+*.prg.mir
