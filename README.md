@@ -1,57 +1,118 @@
 # Daily55
 
-Project mặt đồng hồ hằng ngày cho **Garmin Forerunner 55** (`fr55`), viết bằng Monkey C / Connect IQ.
+A daily watch face project for the **Garmin Forerunner 55** (`fr55`), built with Monkey C / Connect IQ.
 
-Giao diện ban đầu: nền đen, giờ lớn màu trắng, ngày màu xanh, phần trăm pin, số bước và thanh tiến độ mục tiêu bước chân. Giờ tự theo cài đặt 12/24 giờ trên đồng hồ. Khi dữ liệu bước chân không có, hiển thị `--`; khi không có mục tiêu hợp lệ, ẩn thanh tiến độ. Ngày dùng dạng `THU 05/11`, nhãn dùng tiếng Anh để giữ giao diện gọn.
+The watch face uses a black dial with cyan radial dots, rounded analog hour/minute hands, notification count, Bluetooth status, a battery icon, an English date such as `WED 8`, and the latest recorded heart rate. The hands draw above the data fields, so they may overlap a field at some times.
 
-## Thiết lập trên macOS
+A white dotted seconds indicator appears while awake and is hidden in low-power mode. The face uses the system update lifecycle without timers or low-power partial updates. Static background artwork and bundled 12/20 px bitmap fonts keep the layout consistent across device languages.
 
-1. Cài Java JDK 17, chẳng hạn từ [Eclipse Temurin](https://adoptium.net/temurin/releases/?version=17), rồi kiểm tra `java -version`.
-2. Cài [Garmin Connect IQ SDK Manager](https://developer.garmin.com/connect-iq/sdk/). Đăng nhập tài khoản Garmin, tải SDK và chọn làm SDK hiện hành. Trong tab **Devices**, tải **Forerunner 55**.
-3. Mở thư mục project trong VS Code và cài extension **Monkey C** của **Garmin** (`garmin.monkey-c`), được đề xuất trong project.
-4. Mở Command Palette (`Cmd+Shift+P`), chạy **Monkey C: Verify Installation**.
-5. Chạy **Monkey C: Generate a Developer Key**. Lưu key vào thư mục `keys/` trong project hoặc vị trí riêng ngoài project, và cấu hình **Monkey C: Developer Key Path** nếu cần. `keys/`, `*.der` và `*.pem` đã được bỏ qua trong `.gitignore`. Giữ bản sao key để ký các bản cập nhật sau này.
+Heart rate is read from `ActivityMonitor.getHeartRateHistory`, refreshed once per minute and on wake. Invalid, missing, future-dated, and more-than-five-minute-old samples are rejected; unavailable readings display `-- bpm`. This is recorded heart rate, not a continuously requested sensor reading. Notifications are capped at `99+`; battery fill is clamped to 0–100%.
 
-## Chạy simulator
+## Environment installed on this machine
 
-1. Mở `source/Daily55View.mc` trong VS Code.
-2. Nhấn `F5`, chọn cấu hình **Run Daily55 on Forerunner 55** nếu được hỏi, rồi chọn **Forerunner 55**.
-3. Kiểm tra giờ 12/24 giờ, chữ số rộng (ví dụ `20:08`), pin, bước chân chưa có dữ liệu, bước vượt mục tiêu và chế độ ngủ.
+- Homebrew OpenJDK **17.0.21.0.3**, registered at `~/Library/Java/JavaVirtualMachines/openjdk-17.jdk`; `java -version` works.
+- Garmin SDK Manager at `/Applications/SdkManager.app`.
+- Connect IQ SDK **9.3.0**, set as the current SDK; the **fr55** device package, API **3.4.2**, has been downloaded.
+- VS Code extension **garmin.monkey-c 1.1.3**.
+- Signing key at `keys/developer_key.der`, in PKCS#8 DER format, using RSA 4096 bits and file permissions `600`. Do not share or commit this key.
+- `.vscode/settings.json` configures Java and the signing key for this machine. It contains local paths and is excluded by `.gitignore`.
 
-Project chỉ khai báo `fr55` trong manifest. Không có timer hay animation riêng; giao diện dùng callback `onUpdate` của hệ thống. Trong chế độ tiết kiệm điện, hệ thống cập nhật mặt đồng hồ theo phút.
+Open the project in VS Code, open `source/Daily55View.mc`, and press **F5** to launch the simulator configuration. If VS Code has not picked up the new extension, run **Developer: Reload Window**. Use the steps below when setting up the environment again or moving to another machine.
 
-## Build và cài lên đồng hồ
+## Setup on macOS
 
-1. Cắm đồng hồ vào máy tính bằng cáp dữ liệu.
-2. Chạy **Monkey C: Build for Device**, chọn **Forerunner 55**, chọn thư mục đầu ra `bin/`.
-3. Chép file `.prg` được tạo vào `GARMIN/APPS` trên đồng hồ khi ổ thiết bị có thể truy cập từ máy tính.
-4. Ngắt kết nối an toàn. Trên màn hình đồng hồ, giữ **UP**, vào **Watch Face**, chọn **Daily55**, rồi áp dụng.
+1. Install Java JDK 17, for example from [Eclipse Temurin](https://adoptium.net/temurin/releases/?version=17), then verify it with `java -version`.
+2. Install [Garmin Connect IQ SDK Manager](https://developer.garmin.com/connect-iq/sdk/). Sign in to your Garmin account, download an SDK, and set it as the current SDK. In the **Devices** tab, download **Forerunner 55**.
+3. Open the project folder in VS Code and install Garmin's **Monkey C** extension (`garmin.monkey-c`), which the project recommends.
+4. Open the Command Palette (`Cmd+Shift+P`) and run **Monkey C: Verify Installation**.
+5. Run **Monkey C: Generate a Developer Key**. Save the key in the project's `keys/` directory or a private location outside the project, and configure **Monkey C: Developer Key Path** if needed. `keys/`, `*.der`, and `*.pem` are already excluded by `.gitignore`. Keep a backup of the key to sign future updates.
 
-Trên macOS, cách truy cập bộ nhớ thiết bị phụ thuộc chế độ kết nối của đồng hồ. Nếu không thấy ổ trong Finder, kiểm tra kết nối USB và hướng dẫn Garmin trước khi chép file.
+## Run the simulator
 
-Nếu đã đưa thư mục `bin` của SDK vào `PATH`, có thể build bằng terminal từ thư mục gốc project (đổi đường dẫn key theo nơi bạn lưu):
+1. Open `source/Daily55View.mc` in VS Code.
+2. Press `F5`, select **Run Daily55 on Forerunner 55** if prompted, then select **Forerunner 55**.
+3. Check analog hand positions, status indicators, valid/unavailable heart rate, and awake/sleep transitions. The analog dial uses a 12-hour cycle for either device time-display setting.
+
+The manifest targets only `fr55`. The watch face uses the system's `onUpdate` callback without custom timers or animations. In low-power mode, the system updates the watch face once per minute.
+
+## Build and install on the watch
+
+1. Connect the watch to your computer using a data cable.
+2. Run **Monkey C: Build for Device**, select **Forerunner 55**, and choose `bin/` as the output directory.
+3. Copy the generated `.prg` file to `GARMIN/APPS` on the watch when its storage is accessible from your computer.
+4. Safely disconnect the watch. From the watch face, hold **UP**, open **Watch Face**, select **Daily55**, and apply it.
+
+On macOS, access to the watch's storage depends on its connection mode. If the drive does not appear in Finder, check the USB connection and Garmin's instructions before copying the file.
+
+If the SDK's `bin` directory is on your `PATH`, you can build from a terminal at the project root (adjust the key path to match its location):
 
 ```sh
 mkdir -p bin
 monkeyc -f monkey.jungle -d fr55 -y keys/developer_key.der -o bin/Daily55.prg -w
 ```
 
-## Các file cần sửa
+The SDK has not been added to `PATH` on this machine. You can use the current SDK directly:
 
-- `source/Daily55View.mc`: bố cục, màu sắc và dữ liệu hiển thị.
-- `source/Daily55App.mc`: điểm vào ứng dụng.
-- `manifest.xml`: app ID, loại `watchface`, thiết bị và API tối thiểu.
-- `monkey.jungle`: đường dẫn mã nguồn và tài nguyên.
-- `resources/strings/strings.xml`: tên mặt đồng hồ.
-- `resources/drawables/`: icon ứng dụng.
+```sh
+GARMIN_SDK_DIR="$(cat "$HOME/Library/Application Support/Garmin/ConnectIQ/current-sdk.cfg")"
+mkdir -p bin
+"$GARMIN_SDK_DIR/bin/monkeyc" -f monkey.jungle -d fr55 -y keys/developer_key.der -o bin/Daily55.prg -w
+"$GARMIN_SDK_DIR/bin/connectiq"
+# Run the following command after the simulator window opens:
+"$GARMIN_SDK_DIR/bin/monkeydo" bin/Daily55.prg fr55
+```
 
-## Trạng thái kiểm tra
+The `monkeydo` command keeps the connection open while the app runs; use another terminal if you need to build again. The current build is at `bin/Daily55.prg`.
 
-Project được tạo khi máy chưa có Java runtime và chưa tìm thấy Connect IQ SDK. Chưa biên dịch, chạy simulator, xác nhận bố cục bằng ảnh chụp hoặc thử trên đồng hồ thật. Cần hoàn tất các bước thiết lập và kiểm tra simulator trước khi cài để sử dụng hằng ngày.
+## Files to edit
 
-## Tài liệu Garmin
+- `source/Daily55View.mc`: layout, colors, and displayed data.
+- `source/Daily55App.mc`: application entry point.
+- `source/Daily55Data.mc`: heart-rate validation and status value limits.
+- `manifest.xml`: app ID, `watchface` type, target device, and minimum API level.
+- `monkey.jungle`: source and resource paths.
+- `resources/strings/strings.xml`: watch face name.
+- `resources/drawables/`: application icon and generated radial background.
+- `resources/fonts/`: generated bitmap fonts and resource definitions.
+- `tools/GenerateAssets.java`: asset generator; edit this instead of generated images or font metrics.
 
-- [Bắt đầu với Connect IQ](https://developer.garmin.com/connect-iq/connect-iq-basics/getting-started/)
-- [Tạo project, chạy simulator và sideload](https://developer.garmin.com/connect-iq/connect-iq-basics/your-first-app/)
-- [Vòng đời và cập nhật WatchFace](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/WatchFace.html)
-- [Thông số thiết bị](https://developer.garmin.com/connect-iq/compatible-devices/)
+## Assets and focused tests
+
+Regenerate the background and bitmap fonts from the repository root with the installed JDK:
+
+```sh
+java -Djava.awt.headless=true tools/GenerateAssets.java
+```
+
+The generator uses the bundled [Barlow Condensed Regular](https://github.com/google/fonts/tree/main/ofl/barlowcondensed) font. Its original font and generated bitmap derivatives are covered by the [SIL Open Font License](tools/fonts/OFL.txt). No additional Java libraries are required.
+
+Build and run the focused data tests in an open simulator (stop the running face first using **File > Kill App**):
+
+```sh
+GARMIN_SDK_DIR="$(cat "$HOME/Library/Application Support/Garmin/ConnectIQ/current-sdk.cfg")"
+"$GARMIN_SDK_DIR/bin/monkeyc" -f tests/test.jungle -d fr55 -y keys/developer_key.der -o bin/Daily55-tests.prg -t -w
+"$GARMIN_SDK_DIR/bin/monkeydo" bin/Daily55-tests.prg fr55 -t
+```
+
+The test jungle includes `tests/`; the regular build does not include test fixtures.
+
+## Verification status
+
+Checked on **5 November 2026**:
+
+- The final analog face builds for `fr55` using SDK 9.3.0: **BUILD SUCCESSFUL**, without compiler warnings.
+- The face was loaded on the **Forerunner 55 (3.4.2)** simulator. The cyan radial texture, rounded hands, date, status icons, valid simulated HR, unavailable HR, and white seconds spoke were observed.
+- The final 10:10 native-resolution capture was saved locally at `bin/daily55-analog-final-1010.png`. The historical digital-face capture is preserved at `bin/daily55-digital-before.png`.
+- The simulator displayed approximately **18.5 KiB** in use, below the device's **96 KiB** watch-face limit. This is a single-session observation, not a memory-leak or battery-life measurement.
+- All four focused Garmin runtime tests reported **PASS**: invalid sample skipping, missing/expired samples, freshness boundaries including future timestamps, and notification/battery limits. The test build had no compiler warnings. The SDK launcher returned exit status 1 despite reporting `PASSED (passed=4, failed=0, errors=0)`; the launcher exit remains unresolved.
+
+The simulator time-control window became unresponsive during reload, and the verification session was interrupted. Visual checks at noon, 06:30, and 23:59; notification/Bluetooth/battery state combinations; repeated wake/sleep behavior; and memory stability across those cycles remain outstanding. The data-limit tests do not establish those visual outcomes.
+
+Builds and screenshots in `bin/` are local outputs and are not committed. Physical-watch readability, actual battery consumption, and installation on hardware have not been verified. The VS Code configuration is prepared; recorded build and runtime checks used the CLI.
+
+## Garmin documentation
+
+- [Getting started with Connect IQ](https://developer.garmin.com/connect-iq/connect-iq-basics/getting-started/)
+- [Creating a project, running the simulator, and sideloading](https://developer.garmin.com/connect-iq/connect-iq-basics/your-first-app/)
+- [WatchFace lifecycle and updates](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/WatchFace.html)
+- [Device specifications](https://developer.garmin.com/connect-iq/compatible-devices/)
