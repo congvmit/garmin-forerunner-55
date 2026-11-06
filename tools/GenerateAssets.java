@@ -37,7 +37,9 @@ class GenerateAssets {
             }
         }
         graphics.dispose();
-        ImageIO.write(dial, "png", Path.of("resources/drawables/radial_dots.png").toFile());
+        Path output = Path.of("ui/analog/resources/drawables/radial_dots.png");
+        Files.createDirectories(output.getParent());
+        ImageIO.write(dial, "png", output.toFile());
         System.out.println("Generated 208x208 radial background and 12/20 px bitmap fonts.");
     }
 

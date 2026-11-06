@@ -1,0 +1,8 @@
+<resources>
+    <bitmap id="RadialDots" filename="radial_dots.png">
+        <palette disableTransparency="true">
+            <color>000000</color>
+            <color>00FFFF</color>
+        </palette>
+    </bitmap>
+</resources>
